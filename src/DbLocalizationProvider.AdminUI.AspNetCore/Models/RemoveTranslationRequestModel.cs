@@ -1,4 +1,4 @@
-// Copyright (c) 2018 Valdis Iljuconoks.
+﻿// Copyright (c) 2019 Valdis Iljuconoks.
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
 // files (the "Software"), to deal in the Software without
@@ -18,28 +18,17 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 // OTHER DEALINGS IN THE SOFTWARE.
 
-using DbLocalizationProvider.AspNetCore.Sync;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 
-namespace DbLocalizationProvider.AspNetCore
+namespace DbLocalizationProvider.AdminUI.AspNetCore.Models
 {
-    public static class IApplicationBuilderExtensions
+    [JsonObject]
+    public class RemoveTranslationRequestModel
     {
-        public static IApplicationBuilder UseDbLocalizationProvider(this IApplicationBuilder builder)
-        {
-            // create db schema
-            using(var ctx =new LanguageEntities())
-                ctx.Database.Migrate();
+        [JsonProperty("key")]
+        public string Key { get; set; }
 
-            var synchronizer = new ResourceSynchronizer();
-            synchronizer.DiscoverAndRegister();
-
-            // in cases when there has been already a call to LocalizationProvider.Current (some static weird things)
-            // and only then setup configuration is ran - here we need to reset instance once again with new settings
-            LocalizationProvider.Initialize();
-
-            return builder;
-        }
+        [JsonProperty("lang")]
+        public string Language { get; set; }
     }
 }
