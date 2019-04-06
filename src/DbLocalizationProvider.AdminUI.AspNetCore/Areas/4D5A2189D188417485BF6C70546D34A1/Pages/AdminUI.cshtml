@@ -104,13 +104,13 @@
             transform: scale(1.1);
         }
 
-        .translation {
+        .modal-link {
             color: blue;
             text-decoration: underline;
             cursor: pointer;
         }
 
-        .translation.empty {
+        .modal-link.empty {
             color: red;
             text-decoration-style: dotted;
         }
@@ -118,7 +118,7 @@
 </head>
 <body class="container-fluid">
 
-<script type="text/x-template" id="modal-template">
+@*<script type="text/x-template" id="modal-template">
     <div class="modal-mask" transition="modal" @@keydown.esc="$emit('close')">
         <div class="modal-wrapper">
             <div class="modal-container">
@@ -132,6 +132,27 @@
                 <slot name="footer">
                     <button class="modal-default-button btn btn-primary" @@click="$emit('save')">@Localizer.GetString(_ => _.Save)</button>
                     <button class="modal-default-button btn btn-danger" :disabled="!model.isModified" @@click="$emit('remove')">@Localizer.GetString(_ => _.Remove)</button>
+                    <button class="modal-default-button btn btn-default" @@click="$emit('close')">@Localizer.GetString(_ => _.Cancel)</button>
+                </slot>
+                </div>
+            </div>
+        </div>
+    </div>
+</script>*@
+
+<script type="text/x-template" id="comments-modal-template">
+    <div class="modal-mask" transition="modal" @@keydown.esc="$emit('close')">
+        <div class="modal-wrapper">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <span name="header" v-bind:title="model.key">{{ model.titleKey }}</span>
+                </div>
+                <div class="modal-body">
+                    <textarea rows="4" cols="50" id="comments" v-model="model.comments" ref="commentsEditor"></textarea>
+                </div>
+                <div class="modal-footer">
+                <slot name="footer">
+                    <button class="modal-default-button btn btn-primary" @@click="$emit('save')">@Localizer.GetString(_ => _.Save)</button>
                     <button class="modal-default-button btn btn-default" @@click="$emit('close')">@Localizer.GetString(_ => _.Cancel)</button>
                 </slot>
                 </div>
@@ -169,6 +190,7 @@
         </div>
     </div>
     <modal v-if="model.showModal" @@save="save" @@remove="remove" @@close="model.showModal = false" :model="model.currentResource"></modal>
+    <commentsModal v-if="model.showCommentsModal" @@save="save" @@close="model.showCommentsModal = false" :model="model.currentResource"></commentsModal>
     <div class="form-group">
         <input type="text" class="form-control" v-model="model.searchKeyword" placeholder="@Localizer.GetString(_ => _.SearchPlaceholder)"/>
     </div>
@@ -180,6 +202,7 @@
                 <th v-if="model.options.showInvariantCulture">@Localizer.GetString(_ => _.InvariantCultureColumn)</th>
                 <th v-for="lang in model.supportedLanguages" scope="col">{{lang.display}} ({{lang.code}})</th>
                 <th>@Localizer.GetString(_ => _.HiddenColumn)</th>
+                <th>Comments</th>
             </tr>
             </thead>
             <tr v-for="resource in filteredResources">
@@ -190,10 +213,13 @@
                     <span>{{ resource["_"] }}</span>
                 </td>
                 <td v-for="lang in model.supportedLanguages">
-                    <span class="translation" @@click="edit(resource, lang.code)" v-show="resource[lang.code] != null">{{ resource[lang.code] }}</span>
-                    <span class="translation empty" @@click="edit(resource, lang.code)" v-show="resource[lang.code] == null">N/A</span>
+                    <span class="modal-link" @@click="edit(resource, lang.code)" v-show="resource[lang.code] != null">{{ resource[lang.code] }}</span>
+                    <span class="modal-link empty" @@click="edit(resource, lang.code)" v-show="resource[lang.code] == null">N/A</span>
                 </td>
                 <td>{{ resource.isHidden }}</td>
+                <td>
+                    <span class="modal-link" @@click="editComments(resource)">Comments</span>
+                </td>
             </tr>
         </table>
     </div>
@@ -207,8 +233,23 @@
 <script src="res/node_modules.vue_directive_tooltip.dist.vueDirectiveTooltip.min.js"></script>
 
 <script type="text/javascript">
-    Vue.component('modal', {
-        template: '#modal-template',
+    //Vue.component('modal', {
+    //    template: '#modal-template',
+    //    props: {
+    //        model: Object
+    //    },
+    //    data: function() {
+    //        return {
+    //            open: false
+    //        };
+    //    },
+    //    mounted: function() {
+    //        this.$refs.translationEditor.focus();
+    //    }
+    //});
+
+    Vue.component('commentsModal', {
+        template: '#comments-modal-template',
         props: {
             model: Object
         },
@@ -218,7 +259,7 @@
             };
         },
         mounted: function() {
-            this.$refs.translationEditor.focus();
+            this.$refs.commentsEditor.focus();
         }
     });
 
@@ -234,6 +275,7 @@
         supportedLanguages: [],
         loading: true,
         showModal: false,
+        showCommentsModal: false,
         currentResource: {},
         searchKeyword: '',
         options: {
@@ -269,6 +311,15 @@
                 };
 
                 this.model.showModal = true;
+            },
+
+            editComments: function (resource) {
+                this.model.currentResource = {
+                    titleKey: resource.titleKey,
+                    key: resource.key,
+                    comments: 'TODO'
+                };
+                this.model.showCommentsModal = true;
             },
 
             save: function() {
